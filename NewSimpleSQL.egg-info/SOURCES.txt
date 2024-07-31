@@ -1,0 +1,10 @@
+LICENSE
+README.md
+pyproject.toml
+setup.py
+NewSimpleSQL/SimpleSQLite.py
+NewSimpleSQL/__init__.py
+NewSimpleSQL.egg-info/PKG-INFO
+NewSimpleSQL.egg-info/SOURCES.txt
+NewSimpleSQL.egg-info/dependency_links.txt
+NewSimpleSQL.egg-info/top_level.txt

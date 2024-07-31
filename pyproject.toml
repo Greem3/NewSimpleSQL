@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "NewSimpleSQL"
+version = "0.2"
+authors = [
+  { name="Greem", email="ianpichardo575@gmail.com" },
+]
+description = "This is a library to simplify the use of a SQLite3 database, easy to use, easy to understand."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/Greem3/PySimpleSQL"

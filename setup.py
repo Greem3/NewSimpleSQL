@@ -1,16 +1,15 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="Simple SQL",
-    version='1.0',
+    name="NewSimpleSQL",
+    version='0.2',
     packages= [
-        'simple_sqlite'
+        'NewSimpleSQL'
     ],
     description="This is a library to simplify the use of a SQLite3 database, easy to use, easy to understand.",
     long_description=open('README.md', encoding='utf-8').read(),
+    long_description_content_type='text/markdown',
     author="Greem3",
-    url="https://github.com/Greem3",
-    install_requires=[
-        'sqlite3'
-    ],
+    author_email="ianpichardo575@gmail.com",
+    url="https://github.com/Greem3/PySimpleSQL",
 )
