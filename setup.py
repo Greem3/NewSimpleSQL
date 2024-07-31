@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="NewSimpleSQL",
-    version='0.2',
+    version='0.4.0.4',
     packages= [
         'NewSimpleSQL'
     ],
@@ -11,5 +11,5 @@ setup(
     long_description_content_type='text/markdown',
     author="Greem3",
     author_email="ianpichardo575@gmail.com",
-    url="https://github.com/Greem3/PySimpleSQL",
+    url="https://github.com/Greem3/NewSimpleSQL",
 )

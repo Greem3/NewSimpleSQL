@@ -1,3 +1,3 @@
-import NewSimpleSQL
-import NewSimpleSQL.SimpleSQLite
-from NewSimpleSQL.SimpleSQLite import Database, generate_id
+from .SimpleSQLite import Database, generate_id
+
+__all__ = [ 'Database', 'generate_id']

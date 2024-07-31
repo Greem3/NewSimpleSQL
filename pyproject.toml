@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "NewSimpleSQL"
-version = "0.2"
+version = "0.4.0.4"
 authors = [
   { name="Greem", email="ianpichardo575@gmail.com" },
 ]
@@ -18,4 +18,4 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Greem3/PySimpleSQL"
+GitHub = "https://github.com/Greem3/NewSimpleSQL"

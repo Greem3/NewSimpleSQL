@@ -1,11 +1,11 @@
 Metadata-Version: 2.1
 Name: NewSimpleSQL
-Version: 0.2
+Version: 0.4.0.4
 Summary: This is a library to simplify the use of a SQLite3 database, easy to use, easy to understand.
-Home-page: https://github.com/Greem3/PySimpleSQL
+Home-page: https://github.com/Greem3/NewSimpleSQL
 Author: Greem3
 Author-email: Greem <ianpichardo575@gmail.com>
-Project-URL: Homepage, https://github.com/Greem3/PySimpleSQL
+Project-URL: GitHub, https://github.com/Greem3/NewSimpleSQL
 Classifier: Programming Language :: Python :: 3
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
@@ -13,14 +13,22 @@ Requires-Python: >=3.8
 Description-Content-Type: text/markdown
 License-File: LICENSE
 
-# PySimpleSQL
+# NewSimpleSQL
 
 ## English
 Use the easiest SQL programming language with PySimpleSQL!
 
 For now, it only has support for SQLite3
 
+### Download
+
+`pip install NewSimpleSQL`
+
 ## Español
 ¡Utiliza el lenguaje de programación SQL más facil con PySimpleSQL!
 
 Por ahora, solo tiene soporte son SQLite3
+
+### Descarga
+
+`pip install NewSimpleSQL`
