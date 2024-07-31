@@ -12,4 +12,4 @@ Por ahora, solo tiene soporte son SQLite3
 
 # Download
 
-```pip install NewSimpleSQL==0.2```
+`pip install NewSimpleSQL==0.2`
