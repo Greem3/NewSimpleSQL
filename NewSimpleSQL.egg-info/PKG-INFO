@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: NewSimpleSQL
-Version: 0.4.0.4
+Version: 0.4.0.5
 Summary: This is a library to simplify the use of a SQLite3 database, easy to use, easy to understand.
 Home-page: https://github.com/Greem3/NewSimpleSQL
 Author: Greem3

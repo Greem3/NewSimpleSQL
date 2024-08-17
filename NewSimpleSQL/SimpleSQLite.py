@@ -30,10 +30,12 @@ class Database:
         
         argument: str = f"CREATE TABLE {table["name"]}("
         
-        for column in table["columns"]:
-            self.__convert_type(column)
+        ola: dict = table["columns"]
+        
+        for column_name, column_type in table["columns"].items():
+            column_type = self.__convert_type(column_type)
 
-            argument += f'"{column["name"]}"    {column["type"]},'
+            argument += f'"{column_name}"    {column_name},'
             
         argument = f"{argument[0:-1]})"
         
@@ -48,29 +50,17 @@ class Database:
         
         Dictionary keys:
         
-        "name" : string
-        "columns" : dict {
-            "name" : string
-            "type" : string|type
-        }
+        "name" : str
+        "columns" : dict
+        
+        Columns Keys:
+        
+        "name" : str|type
         """
         
         for table_data in tables:
             
-            argument: str = f"CREATE TABLE {table_data["name"]}("
-            
-            for column in table_data["columns"]:
-                self.__convert_type(column)
-                
-                argument += f'"{column["name"]}"    {column["type"]},'
-                
-            argument = f"{argument[0:-1]})"
-            
-            self.__cursor.execute(argument)
-            
-            argument = ""
-            
-        self.__commit()
+            self.simple_create_table(table_data)
         
     def simple_select_data(self, table: str, columns: str, conditions: str = '', one_fetch: bool = False):
         """
