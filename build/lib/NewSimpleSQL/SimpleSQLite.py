@@ -6,10 +6,11 @@ letters: list = string.ascii_letters
 
 class Database:
     
-    def __init__(self, sqlite3_connection: sqlite3.Connection):
-        self.__database: sqlite3.Connection = sqlite3_connection;
+    def __init__(self, sqlite3_connection: sqlite3.Connection|str, auto_commit: bool = True):
+        self.__database: sqlite3.Connection = sqlite3.connect(sqlite3_connection) if isinstance(sqlite3_connection, str) else sqlite3_connection;
+        self.__database.autocommit = auto_commit
         self.__cursor: sqlite3.Cursor = self.__database.cursor();
-        self.__necessary: list[str] = ["TEXT", "INTEGER", "REAL", "BLOB", "NUMERIC"]
+        self.__necessary: tuple[str] = ("TEXT", "INTEGER", "REAL", "BLOB", "NUMERIC")
         
     def close(self):
         """
@@ -17,7 +18,7 @@ class Database:
         """
         self.__database.close()
         
-    def __commit(self):
+    def commit(self):
         """
         Save all changes
         """
@@ -30,18 +31,19 @@ class Database:
         
         argument: str = f"CREATE TABLE {table["name"]}("
         
-        ola: dict = table["columns"]
-        
         for column_name, column_type in table["columns"].items():
             column_type = self.__convert_type(column_type)
 
-            argument += f'"{column_name}"    {column_name},'
+            argument += f'"{column_name}"    {column_type},'
+        
+        if table.get("fk") != None:
+            for foreigns in table["fk"]:
+                
+                argument += f'FOREIGN KEY ({foreigns["column"]}) REFERENCES {foreigns["references"][0]}({foreigns["references"][1]}),'
             
         argument = f"{argument[0:-1]})"
-        
+
         self.__cursor.execute(argument)
-        
-        self.__commit()
             
         
     def complicated_create_tables(self, tables: list[dict]):
@@ -62,7 +64,7 @@ class Database:
             
             self.simple_create_table(table_data)
         
-    def simple_select_data(self, table: str, columns: str, conditions: str = '', one_fetch: bool = False):
+    def simple_select_data(self, table: str, columns: str, conditions: str = '', one_fetch: bool = False) -> list[tuple]|tuple:
         """
         It returns information you need from a table.
         
@@ -78,7 +80,7 @@ class Database:
         
         return answer.fetchall()
     
-    def complicated_select_data(self, tables: list[dict]):
+    def complicated_select_data(self, tables: list[dict]) -> list[list[tuple]|tuple]|list[tuple]:
         """
         It returns information you need from one or more tables.
         
@@ -119,8 +121,6 @@ class Database:
         
         placeholders = ', '.join(['?' for _ in data])
         self.__cursor.execute(f'INSERT INTO {table} VALUES ({placeholders})', data)
-        
-        self.__commit()
     
     def complicated_insert_data(self, tables_datas: list[dict[Union[str|bool]]]):
         """
@@ -142,7 +142,7 @@ class Database:
             placeholders = ', '.join(['?' for _ in table["datas"]])
             self.__cursor.execute(f'INSERT INTO {table["name"]} VALUES ({placeholders})', table["datas"])
             
-        self.__commit()
+        
         
     def simple_update_data(self, table: str, columns: str, condition: str = ''):
         """_summary_
@@ -155,7 +155,7 @@ class Database:
         It allows you to update data in one or more tables according to the conditions you give (or you can give none)
         """
         self.__cursor.execute(f'UPDATE {table} SET {columns} {condition}')
-        self.__commit()
+        
         
     def complicated_update_data(self, tables_column_conditions: dict):
         """
@@ -166,12 +166,12 @@ class Database:
         "name" : string
         "columns" : string (Example: Column1 = "Hello", Column2 = "World")
         "condition" : string
-        """        
+        """
+        
         for table in tables_column_conditions:
-            
             self.__cursor.execute(f'UPDATE {table["name"]} SET {table["columns"]} {table["condition"]}')
             
-        self.__commit()
+        
         
     def simple_delete_table(self, table_name: str):
         """
@@ -179,7 +179,7 @@ class Database:
         """
         
         self.__cursor.execute(f"DROP TABLE {table_name}");
-        self.__commit()
+        
         
     def complicated_delete_table(self, tables_names: list[str]):
         """
@@ -189,44 +189,53 @@ class Database:
         for table in tables_names:
             self.__cursor.execute(f"DROP TABLE {table}");
         
-        self.__commit()
         
-    def custom_execute(self, query: str):
+        
+    def custom_execute(self, query: str, *args: tuple) -> list[tuple]|tuple:
         """
         Run the SQL command you want
         """
         
-        self.__cursor.execute(query)
-        self.__commit()
-            
-    def __convert_type(self, column: dict, inverse: bool = False):
+        self.__cursor.execute(query, args)
         
-        if isinstance(column["type"], type):
-                    
-            column["type"] = column["type"].__name__
-                
-            if column["type"] == "str":
-                column["type"] = "TEXT";
             
-            elif column["type"] == "int":
-                column["type"] = "INTEGER";
-                
-            elif column["type"] == "float":
-                column["type"] = "REAL";
-                
-            elif column["type"] == "Blob":
-                column["type"] = "BLOB";
-                
-            else:
-                raise TypeError("This Type don't exist in sqlite3!")
-        else:
+    def __convert_type(self, value: str|type, inverse: bool = False) -> str|tuple:
+        
+        def sqltype(value_type: str|type) -> str:
+            value_type = value_type.__name__ if isinstance(value_type, type) else type(value_type).__name__
             
-            if column["type"].upper() in self.__necessary:
-                column["type"] = column["type"].upper()
-            else:
-                raise TypeError("This Type don't exist in sqlite3!")
+            if value_type == "tuple":
+                return f'{sqltype(value[0].__name__)} PRIMARY KEY'
             
-def generate_id(length: int = 18, contains_letters: bool = False, only_letters: bool = False):
+            if value_type == "list":
+                return f'{sqltype(value[0].__name__)} DEFAULT {value[1]}'
+            
+            if value_type == "dict":
+                return f'{sqltype(value["type"].__name__)} {value['constraints']}'
+            
+            if value_type == "str":
+                return "TEXT"
+            
+            if value_type == "int":
+                return "INTEGER"
+            
+            if value_type == "float":
+                return "REAL"
+            
+            if value_type == "Blob":
+                return "BLOB"
+
+            raise TypeError("This Type don't exist in sqlite3!")
+        
+        if isinstance(value, type|tuple|list|dict):  
+            return sqltype(value)
+            
+        if value.upper() in self.__necessary:
+            return value.upper()
+        
+        raise TypeError("This Type don't exist in sqlite3!")
+            
+def generate_id(length: int = 18, contains_letters: bool = False, only_letters: bool = False) -> int|str:
     """
     It generates a random ID for you without you having to do it yourself
     
@@ -259,4 +268,4 @@ def generate_id(length: int = 18, contains_letters: bool = False, only_letters: 
     
     return random.randint(1, 10**length)-1
 
-__all__ = [ 'Database', 'generate_id']
+#TODO: Poder asignar primary keys, foreign keys, defaults, checks y constraints
