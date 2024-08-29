@@ -9,6 +9,144 @@ For now, it only has support for SQLite3
 
 `pip install NewSimpleSQL`
 
+How connect your database:
+
+-SQLite
+```
+from NewSimpleSQL.SimpleSQLite import Database
+
+#With auto commit
+database: Database = Database('example_database.db')
+
+#Without auto commit
+database: Database = Database('example_database.db', False)
+```
+
+How to create tables in your database:
+
+-SQLite
+```
+from NewSimpleSQL.SimpleSQLite import Database
+
+database: Database = Database('example_database.db')
+
+#Create one table
+database.simple_create_table({
+    "name" : "example_table",
+    "columns" : {
+        "id" : (int,)
+        "default_number" : [int, 0],
+        "number_constraints" : {
+            "type" : int,
+            "constraints" : "CHECK (number_constraints > 18)"
+        }
+    }
+})
+
+#Create multiple tables
+database.complicated_create_tables([
+    {
+        "name" : "example_table_2",
+        "columns" : {
+            "id" : ID(int),
+            "number_of_the_first_table" : int
+        },
+        "fk" : {
+            "number_of_the_first_table" : ("example_table", "default_number")
+            # Table column name : (Name of the other table, Column of the other table)
+        }
+    }
+    #Other tables
+])
+```
+
+Column Types:
+
+SQLite
+- `int = INTEGER`
+- `float = REAL`
+- `str = TEXT`
+- `sqlite3.Blob|Blob = BLOB`
+- `Numeric() = NUMERIC`
+
+IDs, defaults y constraints:
+
+SQLite
+- `(id_type[int|str],)|ID(int|str) = id_type PRIMARY KEY`
+- `[column_type[int|str], value] = column_type DEFAULT value`
+- `{ "type" : type, "constraints" : str } = "type" "constraints"`
+
+How to get data from the database:
+
+```
+from NewSimpleSQL.SimpleSQLite import Database
+
+database: Database = Database('example_database.db')
+
+#Get data from one table
+database.simple_select_data("table_name", "column1, column2, ..., column_infinity"|"*", 'WHERE column1 = 0 ORDER BY column1'|None, one_fetch=True|False)
+
+#Get data from multiple table
+database.complicated_select_data([
+    {
+        "name" : "table_name",
+        "column" : "column1, column2, column3, ..., column_infinity",
+        "condition" : "WHERE column1 = 0 ORDER BY column1",
+        "fetch" : False
+    },
+    {
+        "name" : "table_name_2",
+        "column" : "column1, column2, column3, ..., column_infinity",
+        "condition" : "WHERE column2 = 0 ORDER BY column2",
+        "fetch" : True
+    }
+])
+```
+
+How to Insert Data into the Database:
+
+```
+from NewSimpleSQL.SimpleSQLite import Database
+
+database: Database = Database('example_database.db')
+
+#Insert data into a single table
+database.simple_insert_data("table_name", (value1, value2, value3, ..., value_infinity))
+
+#Insert data into one or more tables
+database.complicated_insert_data({
+    "table_name" : (value1, value2, value3, ..., value_infinity),
+    "table_name_2" : (value1, value2, value3, ..., value_infinity)
+})
+```
+
+How to update data in the database:
+
+```
+from NewSimpleSQL.SimpleSQLite import Database
+
+database: Database = Database('example_database.db')
+
+#Update data in a single table
+database.simple_update_data("table_name", 'column1 = 0, column2 = "Hello", column3 = False', 'WHERE column1 != 0')
+
+#Update data in one or more tables
+database.complicated_update_data([
+    {
+        "name" : "example_table",
+        "columns" : 'column1 = 0, column4 = "Bye"',
+        "condition" : 'WHERE column1 != 0'
+    },
+    {
+        "name" : "example_table_2",
+        "columns" : 'column1 = 0, column4 = "Bye"',
+        "condition" : 'WHERE column4 != "Bye"'
+    }
+])
+```
+
+These are all the basic commands.
+
 ## Español
 ¡Utiliza el lenguaje de programación SQL más facil con PySimpleSQL!
 
@@ -17,3 +155,147 @@ Por ahora, solo tiene soporte son SQLite3
 ### Descarga
 
 `pip install NewSimpleSQL`
+
+### Como usar la libreria
+
+Importar la libreria:
+
+`import NewSimpleSQL`
+
+Como conectarte a tu base de datos:
+
+-SQLite
+```
+from NewSimpleSQL.SimpleSQLite import Database
+
+#Con auto commit
+database: Database = Database('example_database.db')
+
+#Sin auto commit
+database: Database = Database('example_database.db', False)
+```
+
+Como crear tablas en tu base de datos:
+
+-SQLite
+```
+from NewSimpleSQL.SimpleSQLite import Database
+
+database: Database = Database('example_database.db')
+
+#Crear una tabla
+database.simple_create_table({
+    "name" : "tabla_de_ejemplo",
+    "columns" : {
+        "id" : (int,)
+        "numero_por_defecto" : [int, 0],
+        "restriccion_de_numero" : {
+            "type" : int,
+            "constraints" : "CHECK (restriccion_de_numero > 18)"
+        }
+    }
+})
+
+#Crear varias tablas
+database.complicated_create_tables([
+    {
+        "name" : "tabla_de_ejemplo_2",
+        "columns" : {
+            "id" : ID(int),
+            "numero_de_la_primera_tabla" : int
+        },
+        "fk" : {
+            "numero_de_la_primera_tabla" : ("tabla_de_ejemplo", "numero_por_defecto")
+            # Nombre de la columna de la tabla : (Nombre de la otra tabla, Columna de la otra tabla)
+        }
+    }
+    #Otras tablas
+])
+```
+
+Tipos de columnas:
+
+SQLite
+- `int = INTEGER`
+- `float = REAL`
+- `str = TEXT`
+- `sqlite3.Blob|Blob = BLOB`
+- `Numeric() = NUMERIC`
+
+IDs, defaults y constraints:
+
+SQLite
+- `(id_type[int|str],)|ID(int|str) = id_type PRIMARY KEY`
+- `[column_type[int|str], value] = column_type DEFAULT value`
+- `{ "type" : type, "constraints" : str } = "type" "constraints"`
+
+Como conseguir datos de la base de datos:
+
+```
+from NewSimpleSQL.SimpleSQLite import Database
+
+database: Database = Database('example_database.db')
+
+#Conseguir datos de una tabla
+database.simple_select_data("table_name", "column1, column2, ..., column_infinity"|"*", 'WHERE column1 = 0 ORDER BY column1'|None, one_fetch=True|False)
+
+#Conseguir datos de varias tablas
+database.complicated_select_data([
+    {
+        "name" : "table_name",
+        "column" : "column1, column2, column3, ..., column_infinity",
+        "condition" : "WHERE column1 = 0 ORDER BY column1",
+        "fetch" : False
+    },
+    {
+        "name" : "table_name_2",
+        "column" : "column1, column2, column3, ..., column_infinity",
+        "condition" : "WHERE column2 = 0 ORDER BY column2",
+        "fetch" : True
+    }
+])
+```
+
+Como insertar datos en la base de datos:
+
+```
+from NewSimpleSQL.SimpleSQLite import Database
+
+database: Database = Database('example_database.db')
+
+#Insertar datos en una sola tabla
+database.simple_insert_data("table_name", (value1, value2, value3, ..., value_infinity))
+
+#Insertar datos en una o mas tablas
+database.complicated_insert_data({
+    "table_name" : (value1, value2, value3, ..., value_infinity),
+    "table_name_2" : (value1, value2, value3, ..., value_infinity)
+})
+```
+
+Como actualizar datos en la base de datos:
+
+```
+from NewSimpleSQL.SimpleSQLite import Database
+
+database: Database = Database('example_database.db')
+
+#Actualizar datos en una sola tabla
+database.simple_update_data("table_name", 'column1 = 0, column2 = "Hola", column3 = False', 'WHERE column1 != 0')
+
+#Actualizar datos en una o mas tablas
+database.complicated_update_data([
+    {
+        "name" : "example_table",
+        "columns" : 'column1 = 0, column4 = "Adios"',
+        "condition" : 'WHERE column1 != 0'
+    },
+    {
+        "name" : "example_table_2",
+        "columns" : 'column1 = 0, column4 = "Adios"',
+        "condition" : 'WHERE column4 != "Adios"'
+    }
+])
+```
+
+Estos son todos los comandos basicos.

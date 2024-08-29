@@ -1,6 +1,4 @@
 import sqlite3
-import random, string, pickle
-from typing import Union
 
 class Numeric(): pass
 
@@ -9,6 +7,8 @@ class ID():
     def __init__(self, id_type: str|int = int, auto_increment: bool = True):
         self.id_type = id_type
         self.auto_increment = auto_increment
+        
+#region DATABASE
 
 class Database():
     
@@ -48,8 +48,6 @@ class Database():
                 column_name: str; foreign_info: list|tuple
                 
                 argument += f'FOREIGN KEY ({column_name}) REFERENCES {foreign_info[0]}({foreign_info[1]})'
-                
-                #TODO: hacer que detecte si la referencia contiene un ON DELETE CASCADE, que sirve para que se elimine la fila si se elimina el registro de la foreing key
                 
                 if len(foreign_info) >= 3:
                     if foreign_info[2]:
@@ -105,6 +103,7 @@ class Database():
         "name" : string
         "columns" : string (Example: "column1, column2, column3, column4, ..., columnInfinity)
         "conditions" : string (Example: "Where column1 = "column" ORDER BY column2 DESC")
+        "fetch" : bool (Example: True)
         
         What is one fetch?
         
@@ -138,7 +137,7 @@ class Database():
         placeholders = ', '.join(['?' for _ in data])
         self.__cursor.execute(f'INSERT INTO {table} VALUES ({placeholders})', data)
     
-    def complicated_insert_data(self, tables_datas: list[dict[Union[str|bool]]]):
+    def complicated_insert_data(self, tables_datas: dict[tuple|list]):
         """
         It allows you to insert data into one or more tables.
         
@@ -153,12 +152,8 @@ class Database():
         You can't leave any data empty, but the data you wanted to be Null will have the data from another table below.
         """
         
-        for table in tables_datas:
-            
-            placeholders = ', '.join(['?' for _ in table["datas"]])
-            self.__cursor.execute(f'INSERT INTO {table["name"]} VALUES ({placeholders})', table["datas"])
-            
-        
+        for table_name, table_data in tables_datas.items():
+            self.__cursor.execute(f'INSERT INTO {table_name} VALUES ({', '.join(['?' for _ in table_data])})', table_data)
         
     def simple_update_data(self, table: str, columns: str, condition: str = ''):
         """_summary_
@@ -173,7 +168,7 @@ class Database():
         self.__cursor.execute(f'UPDATE {table} SET {columns} {condition}')
         
         
-    def complicated_update_data(self, tables_column_conditions: dict):
+    def complicated_update_data(self, tables_column_conditions: list[dict]):
         """
         It allows you to update data from a table according to the conditions you give (or you can give none)
         
@@ -185,7 +180,7 @@ class Database():
         """
         
         for table in tables_column_conditions:
-            self.__cursor.execute(f'UPDATE {table["name"]} SET {table["columns"]} {table["condition"]}')
+            self.simple_update_data(table["name"], table["columns"], table["condition"])
         
     def simple_drop_table(self, table_name: str):
         """
@@ -217,30 +212,49 @@ class Database():
         for table_name, condition in args.items():
             self.simple_delete_data(table_name, condition)
     
-    #region TODO: ALTER TABLE
-    
     def simple_add_column(self, table_name: str, column_name: str, datatype: type|str):
+        """
+        Add columns on one table
+        """
         self.__cursor.execute(f"ALTER TABLE {table_name} ADD {column_name} {datatype}")
     
     def complicated_add_columns(self, args: dict[tuple|list]):
+        """
+        Add columns on one or more tables
+        """
         for table_name, column_info in args.items():
             self.simple_add_column(table_name, column_info[0], column_info[1])
             
     def simple_delete_column(self, table_name: str, column_name: str):
+        """
+        Delete a column of one table
+        """
         self.__cursor.execute(f'ALTER TABLE {table_name} DROP COLUMN {column_name}')
         
     def complicated_delete_columns(self, args: dict[str]):
+        """
+        Delete a column of one or more tables
+        """
         for table_name, column_name in args.items():
             self.simple_delete_column(table_name, column_name)
             
     def simple_rename_column(self, table_name: str, old_column_name: str, new_column_name: str):
+        """
+        Rename a column of one table
+        """
         self.__cursor.execute(f'ALTER TABLE {table_name} RENAME COLUMN {old_column_name} TO {new_column_name}')
         
     def complicated_rename_columns(self, args: dict[tuple|list]):
+        """
+        Rename a column of one or more tables
+        """
         for table_name, rename_info in args.items():
             self.simple_rename_column(table_name, rename_info[0], rename_info[1])
             
     def drop_database(self, name: str|None = None):
+        """
+        Delete a database
+        """
         if bool(name):
             self.__cursor.execute(f'DROP DATABASE {name}')
             return
@@ -248,6 +262,9 @@ class Database():
         self.__cursor.execute(f"DROP DATABASE {self.__database_name}")
         
     def backup_database(self, to_disk: str, name: str|None = None):
+        """
+        Make a backup of the database
+        """        
         if bool(name):
             self.__cursor.execute(f'BACKUP DATABASE {name} TO DISK = {to_disk}')
             return
@@ -315,3 +332,5 @@ class Database():
             return value.upper()
         
         raise TypeError("This Type don't exist in sqlite!")
+    
+Database().simple_create_table()
