@@ -2,9 +2,7 @@ import sqlite3
 import random, string
 from typing import Union
 
-letters: list = string.ascii_letters
-
-class Database:
+class Database():
     
     def __init__(self, sqlite3_connection: sqlite3.Connection|str, auto_commit: bool = True):
         self.__database: sqlite3.Connection = sqlite3.connect(sqlite3_connection) if isinstance(sqlite3_connection, str) else sqlite3_connection;
@@ -37,9 +35,19 @@ class Database:
             argument += f'"{column_name}"    {column_type},'
         
         if table.get("fk") != None:
-            for foreigns in table["fk"]:
+            for column_name, foreign_info in table["fk"].items():
+                column_name: str; foreign_info: list|tuple
                 
-                argument += f'FOREIGN KEY ({foreigns["column"]}) REFERENCES {foreigns["references"][0]}({foreigns["references"][1]}),'
+                argument += f'FOREIGN KEY ({column_name}) REFERENCES {foreign_info[0]}({foreign_info[1]})'
+                
+                #TODO: hacer que detecte si la referencia contiene un ON DELETE CASCADE, que sirve para que se elimine la fila si se elimina el registro de la foreing key
+                
+                if len(foreign_info) >= 3:
+                    if foreign_info[2]:
+                        argument += "ON DELETE CASCADE"
+                
+                argument += ','
+                
             
         argument = f"{argument[0:-1]})"
 
@@ -170,8 +178,6 @@ class Database:
         
         for table in tables_column_conditions:
             self.__cursor.execute(f'UPDATE {table["name"]} SET {table["columns"]} {table["condition"]}')
-            
-        
         
     def simple_delete_table(self, table_name: str):
         """
@@ -191,7 +197,7 @@ class Database:
         
         
         
-    def custom_execute(self, query: str, *args: tuple) -> list[tuple]|tuple:
+    def custom_execute(self, query: str, *args: tuple|list) -> list[tuple]|tuple|None:
         """
         Run the SQL command you want
         """
@@ -205,7 +211,13 @@ class Database:
             value_type = value_type.__name__ if isinstance(value_type, type) else type(value_type).__name__
             
             if value_type == "tuple":
-                return f'{sqltype(value[0].__name__)} PRIMARY KEY'
+                
+                valor: str =  f'{sqltype(value[0].__name__)} PRIMARY KEY'
+                
+                if len(value) == 2:
+                    valor += f" AUTO_INCREMENT"
+                
+                return valor
             
             if value_type == "list":
                 return f'{sqltype(value[0].__name__)} DEFAULT {value[1]}'
@@ -224,8 +236,11 @@ class Database:
             
             if value_type == "Blob":
                 return "BLOB"
+            
+            if value_type == "Numeric":
+                return "NUMERIC"
 
-            raise TypeError("This Type don't exist in sqlite3!")
+            raise TypeError("This Type don't exist in sqlite!")
         
         if isinstance(value, type|tuple|list|dict):  
             return sqltype(value)
@@ -233,39 +248,6 @@ class Database:
         if value.upper() in self.__necessary:
             return value.upper()
         
-        raise TypeError("This Type don't exist in sqlite3!")
-            
-def generate_id(length: int = 18, contains_letters: bool = False, only_letters: bool = False) -> int|str:
-    """
-    It generates a random ID for you without you having to do it yourself
+        raise TypeError("This Type don't exist in sqlite!")
     
-    WARNING:
-    If the ID is for numbers only, a number of any size can be displayed.
-    If the ID contains letters, or is letter-only, it will always be the same size
-    """
-
-    new_id: str = ''
-    
-    if contains_letters == True:
-    
-        for i in range(0, length):
-        
-            if random.random() <= 0.5:
-                new_id += str(random.randint(0, 9))
-            else:
-                new_id += random.choice(letters)
-              
-        return new_id
-    
-    if only_letters == True:
-    
-        for i in range(0, length):
-        
-            new_id += random.choice(letters)
-          
-        return new_id
-    
-    
-    return random.randint(1, 10**length)-1
-
-#TODO: Poder asignar primary keys, foreign keys, defaults, checks y constraints
+class Numeric(): pass
