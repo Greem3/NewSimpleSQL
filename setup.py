@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="NewSimpleSQL",
-    version='0.6.0.1',
+    version='0.6.0.10',
     packages= [
         'NewSimpleSQL'
     ],

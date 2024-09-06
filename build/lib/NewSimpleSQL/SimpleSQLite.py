@@ -1,6 +1,11 @@
-import sqlite3
+import sqlite3, random, string
+letters: str = string.ascii_letters
+
+#region SQLITE class
 
 class Numeric(): pass
+
+class Blob(): pass
 
 class ID():
     
@@ -8,13 +13,53 @@ class ID():
         self.id_type = id_type
         self.auto_increment = auto_increment
         
+#region ADAPTERS
+
+class DBAdapter():
+    
+    def __init__(self):
+        self.__dbtypes = {
+            "str" : "NONE",
+            "int" : "NONE",
+            "float" : "NONE",
+            "Blob" : "NONE",
+            "Numeric" : "NONE"
+        }
+        
+        self.__change_types()
+        
+    def __change_types(self):
+        db_types: tuple
+        
+        if isinstance(self, SQLiteAdapter):
+            pass
+        
+        if isinstance(self, PostGreAdapter):
+            pass
+    
+    def __call__(self) -> dict:
+        return self.__dbtypes
+    
+    def __str__(self) -> str:
+        return str(self.__dbtypes)
+    
+class SQLiteAdapter(DBAdapter):
+    
+    def __init__(self):
+        super().__init__()
+        
+class PostGreAdapter(DBAdapter):
+    
+    def __init__(self):
+        super().__init__()
+        
 #region DATABASE
 
 class Database():
     
-    def __init__(self, sqlite3_connection: sqlite3.Connection|str, auto_commit: bool = True):
-        self.__database_name: str = sqlite3_connection if isinstance(sqlite3_connection, str) else None
+    def __init__(self, sqlite3_connection: sqlite3.Connection|str, auto_commit: bool = True, adapter: DBAdapter = SQLiteAdapter()):
         self.__database: sqlite3.Connection = sqlite3.connect(sqlite3_connection) if isinstance(sqlite3_connection, str) else sqlite3_connection;
+        self.__adapter: DBAdapter = adapter
         self.__database.autocommit = auto_commit
         self.__cursor: sqlite3.Cursor = self.__database.cursor()
         self.__necessary: tuple[str] = ("TEXT", "INTEGER", "REAL", "BLOB", "NUMERIC")
@@ -42,6 +87,9 @@ class Database():
             column_type = self.__convert_type(column_type)
 
             argument += f'"{column_name}"    {column_type},'
+            
+        if table.get("composite") != None:
+            argument += f'PRIMARY KEY ({', '.join(table["composite"])}),'
         
         if table.get("fk") != None:
             for column_name, foreign_info in table["fk"].items():
@@ -75,10 +123,9 @@ class Database():
         """
         
         for table_data in tables:
-            
             self.simple_create_table(table_data)
         
-    def simple_select_data(self, table: str, columns: str, conditions: str = '', one_fetch: bool = False) -> list[tuple]|tuple:
+    def simple_select_data(self, table: str, columns: str = "*", conditions: str = '', one_fetch: bool = False) -> list[tuple]|tuple:
         """
         It returns information you need from a table.
         
@@ -89,7 +136,7 @@ class Database():
         
         answer = self.__cursor.execute(f'SELECT {columns} FROM {table} {conditions}')
         
-        if one_fetch:
+        if bool(one_fetch):
             return answer.fetchone()
         
         return answer.fetchall()
@@ -113,18 +160,11 @@ class Database():
         info: list = []
         
         for table in tables:
-            
-            data = self.__cursor.execute(f'SELECT {table["columns"]} FROM {table["name"]} {table["conditions"]}')
-            
-            if table["fetch"]:
-                info.append(data.fetchone())
-                continue
-            
-            info.append(data.fetchall())
+            info.append(self.simple_select_data(table["name"], table["columns"], table["conditions"], table.get("fetch")))
             
         return info
         
-    def simple_insert_data(self, table: str, data: tuple|list):
+    def simple_insert_data(self, table: str, data: tuple|list, especific_columns: str|None = None):
         """
         It allows you to insert data into a table.
         
@@ -134,8 +174,11 @@ class Database():
         You can't leave any data empty, but the data you wanted to be Null will have the data from another table below.
         """
         
-        placeholders = ', '.join(['?' for _ in data])
-        self.__cursor.execute(f'INSERT INTO {table} VALUES ({placeholders})', data)
+        if bool(especific_columns):
+            self.__cursor.execute(f'INSERT INTO {table} ({especific_columns}) VALUES ({', '.join(['?' for _ in data])})', data)
+            return
+        
+        self.__cursor.execute(f'INSERT INTO {table} VALUES ({', '.join(['?' for _ in data])})', data)
     
     def complicated_insert_data(self, tables_datas: dict[tuple|list]):
         """
@@ -153,7 +196,11 @@ class Database():
         """
         
         for table_name, table_data in tables_datas.items():
-            self.__cursor.execute(f'INSERT INTO {table_name} VALUES ({', '.join(['?' for _ in table_data])})', table_data)
+            if isinstance(table_data, tuple|list):
+                self.simple_insert_data(table_name, table_data[1], table_data[0])
+                return
+            
+            self.simple_insert_data(table_name, table_data) 
         
     def simple_update_data(self, table: str, columns: str, condition: str = ''):
         """_summary_
@@ -194,7 +241,6 @@ class Database():
         """
         Delete one or more tables from the database
         """
-        
         for table in tables_names:
             self.simple_drop_table(table)
             
@@ -202,7 +248,6 @@ class Database():
         """
         Delete a row from one table
         """
-        
         self.__cursor.execute(f"DELETE FROM {table_name} WHERE {condition}")
         
     def complicated_delete_data(self, args: dict[str]):
@@ -251,25 +296,12 @@ class Database():
         for table_name, rename_info in args.items():
             self.simple_rename_column(table_name, rename_info[0], rename_info[1])
             
-    def drop_database(self, name: str|None = None):
+    def drop_database(self, name: str = None):
         """
         Delete a database
         """
-        if bool(name):
-            self.__cursor.execute(f'DROP DATABASE {name}')
-            return
-        
-        self.__cursor.execute(f"DROP DATABASE {self.__database_name}")
-        
-    def backup_database(self, to_disk: str, name: str|None = None):
-        """
-        Make a backup of the database
-        """        
-        if bool(name):
-            self.__cursor.execute(f'BACKUP DATABASE {name} TO DISK = {to_disk}')
-            return
-        
-        self.__cursor.execute(f'BACKUP DATABASE {self.__database_name} TO DISK = {to_disk}')
+        self.__cursor.execute(f'DROP DATABASE {name}')
+        return
         
     def custom_execute(self, query: str, *args: tuple|list|None) -> list[tuple]|tuple|None:
         """
@@ -283,44 +315,38 @@ class Database():
     def __convert_type(self, value: str|type, inverse: bool = False) -> str|tuple:
         
         def sqltype(value_type: str|type) -> str:
-            value_type = value_type.__name__ if isinstance(value_type, type) else type(value_type).__name__
+            type_value = value_type.__name__ if isinstance(value_type, type) else type(value_type).__name__
             
-            if value_type == "tuple":
-                
-                valor: str =  f'{sqltype(value[0].__name__)} PRIMARY KEY'
-                
-                if len(value) == 2:
-                    valor += f" AUTOINCREMENT"
-                
-                return valor
+            if type_value == "tuple":
+                return f'{sqltype(value_type[0])} NOT NULL'
             
-            if value_type == "ID":
-                valor: str =  f'{sqltype(value.id_type)} PRIMARY KEY'
+            if type_value == "ID":
+                valor: str =  f'{sqltype(value_type.id_type)} PRIMARY KEY'
                 
                 if value.auto_increment:
                     valor += f" AUTOINCREMENT"
                 
                 return valor
             
-            if value_type == "list":
-                return f'{sqltype(value[0].__name__)} DEFAULT {value[1]}'
+            if type_value == "list":
+                return f'{sqltype(value_type[0])} DEFAULT {repr(value_type[1]) if isinstance(value_type[1], str) else value_type[1]}'
             
-            if value_type == "dict":
-                return f'{sqltype(value["type"].__name__)} {value['constraints']}'
+            if type_value == "dict":
+                return f'{sqltype(value_type["type"])} {value['constraints']}'
             
-            if value_type == "str":
+            if type_value == "str":
                 return "TEXT"
             
-            if value_type == "int":
+            if type_value == "int":
                 return "INTEGER"
             
-            if value_type == "float":
+            if type_value == "float":
                 return "REAL"
             
-            if value_type == "Blob":
+            if type_value == "Blob":
                 return "BLOB"
             
-            if value_type == "Numeric":
+            if type_value == "Numeric":
                 return "NUMERIC"
 
             raise TypeError("This Type don't exist in sqlite!")
@@ -333,4 +359,36 @@ class Database():
         
         raise TypeError("This Type don't exist in sqlite!")
     
-Database().simple_create_table()
+#region GENERATE ID
+
+def generate_id(length: int = 18, contains_letters: bool = False, only_letters: bool = False):
+    """
+    It generates a random ID for you without you having to do it yourself
+    
+    WARNING:
+    If the ID is for numbers only, a number of any size can be displayed.
+    If the ID contains letters, or is letter-only, it will always be the same size
+    """
+
+    new_id: str = ''
+    
+    if contains_letters == True:
+    
+        for i in range(0, length):
+        
+            if random.random() <= 0.5:
+                new_id += str(random.randint(0, 9))
+            else:
+                new_id += random.choice(letters)
+              
+        return new_id
+    
+    if only_letters == True:
+    
+        for i in range(0, length):
+        
+            new_id += random.choice(letters)
+          
+        return new_id
+    
+    return random.randint(1, 10**length)-1

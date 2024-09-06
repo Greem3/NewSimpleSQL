@@ -17,7 +17,7 @@ def Serialize(value: any, serializer: Module = pickle) -> Blob:
     """
     return serializer.dumps(value)
 
-def Deserialize(value: any, deserializer = pickle) -> any:
+def Deserialize(value: any, deserializer: Module = pickle) -> any:
     """_summary_
     
     Deserialize an object

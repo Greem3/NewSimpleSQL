@@ -2,6 +2,7 @@ LICENSE
 README.md
 pyproject.toml
 setup.py
+NewSimpleSQL/SimpleSQL.py
 NewSimpleSQL/SimpleSQLite.py
 NewSimpleSQL/__init__.py
 NewSimpleSQL/serialize_data.py

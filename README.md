@@ -187,7 +187,7 @@ database: Database = Database('example_database.db')
 database.simple_create_table({
     "name" : "tabla_de_ejemplo",
     "columns" : {
-        "id" : (int,)
+        "id" : ID()
         "numero_por_defecto" : [int, 0],
         "restriccion_de_numero" : {
             "type" : int,
@@ -201,7 +201,7 @@ database.complicated_create_tables([
     {
         "name" : "tabla_de_ejemplo_2",
         "columns" : {
-            "id" : ID(int),
+            "id" : ID(str, auto_increment=False),
             "numero_de_la_primera_tabla" : int
         },
         "fk" : {
@@ -225,7 +225,8 @@ SQLite
 IDs, defaults y constraints:
 
 SQLite
-- `(id_type[int|str],)|ID(int|str) = id_type PRIMARY KEY`
+- `ID(int|str, auto_increment=True|False) = id_type PRIMARY KEY`
+- `(column_type,) = column_type NOT NULL`
 - `[column_type[int|str], value] = column_type DEFAULT value`
 - `{ "type" : type, "constraints" : str } = "type" "constraints"`
 
